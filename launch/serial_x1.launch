@@ -1,0 +1,27 @@
+<launch>
+
+  <arg name="serial_port" default="/dev/ttyUSB0" /> <!-- /dev/ttyUSB0-->
+  <arg name="baud_rate" default="115200" />
+  <arg name="rate_hz" default="500" />
+  <arg name="frame_id" default="imu_link" />
+
+    <node pkg="serial_x1" type="imu_x1_node" name="imu_x1_node" output="screen">
+        <param name="serial_port" type="string" value="$(arg serial_port)" />
+        <param name="baud_rate" type="int" value="$(arg baud_rate)" />
+        <param name="rate_hz" type="int" value="$(arg rate_hz)" />
+        <param name="frame_id" type="string" value="$(arg frame_id)" />
+        
+    </node>
+
+
+  <!-- URDF file load -->
+  <!-- <param name="robot_description" command="cat $(find stella_ahrs)/urdf/x1.urdf"/> -->
+
+  <!-- robot_state_publisher 실행 (TF 퍼블리쉬) -->
+  <!-- <node pkg="robot_state_publisher" type="robot_state_publisher" name="robot_state_publisher" output="screen"/> -->
+
+  <!-- RViz 실행 
+  <node pkg="rviz" type="rviz" name="rviz" args="-d $(find stella_ahrs)/rviz_config.rviz"/>-->
+</launch>
+
+
