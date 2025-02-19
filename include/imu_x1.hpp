@@ -31,9 +31,9 @@ using namespace std::chrono;
 #define SIN(a) sin(DEG2RAD(a))
 
 // 변수를 선언 (예: 가속도 센서의 x, y, z 값)
-int16_t acc_x = 0, acc_y = 0, acc_z = 0;
-int16_t gyr_x = 0, gyr_y = 0, gyr_z = 0;
-int16_t ang_x = 0, ang_y = 0, ang_z = 0;
+static float acc_x = 0, acc_y = 0, acc_z = 0;
+static float gyr_x = 0, gyr_y = 0, gyr_z = 0;
+static float ang_x = 0, ang_y = 0, ang_z = 0;
 
 std::string serial_port;
 std::string frame_id;

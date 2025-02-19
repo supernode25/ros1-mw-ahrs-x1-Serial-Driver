@@ -2,7 +2,7 @@
 
   <arg name="serial_port" default="/dev/ttyUSB0" /> <!-- /dev/ttyUSB0-->
   <arg name="baud_rate" default="115200" />
-  <arg name="rate_hz" default="500" />
+  <arg name="rate_hz" default="400" />
   <arg name="frame_id" default="imu_link" />
 
     <node pkg="serial_x1" type="imu_x1_node" name="imu_x1_node" output="screen">
@@ -12,7 +12,6 @@
         <param name="frame_id" type="string" value="$(arg frame_id)" />
         
     </node>
-
 
   <!-- URDF file load -->
   <!-- <param name="robot_description" command="cat $(find stella_ahrs)/urdf/x1.urdf"/> -->

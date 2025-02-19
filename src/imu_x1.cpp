@@ -17,7 +17,7 @@ void process_packet(const unsigned char data_buffer[13], sensor_msgs::Imu& imu) 
         }
     }
     if (stx_index == -1) {
-        ROS_WARN("STX (0x02) not found in the packet");
+        //ROS_WARN("STX (0x02) not found in the packet");
         return;
     }
     
@@ -37,22 +37,22 @@ void process_packet(const unsigned char data_buffer[13], sensor_msgs::Imu& imu) 
     }
 
     // 5. 패킷 할당 크기 디버깅
-    if (extracted_data.size() != 13) {
-        ROS_WARN("Reconstructed data size is not 13 bytes or Invaild packet data!!!");
-    }
+    // if (extracted_data.size() != 13) {
+    //     ROS_WARN("Reconstructed data size is not 13 bytes or Invaild packet data!!!");
+    // }
 
     // 6. 재구성된 데이터 출력
-    std::stringstream ss;
-    ss << "Reconstructed Data: ";
-    for (size_t i = 0; i < extracted_data.size(); ++i) {
-        ss << "0x" << std::setw(2) << std::setfill('0') << std::hex << (int)extracted_data[i] << " ";
-    }
-    ROS_INFO_STREAM(ss.str());
+    // std::stringstream ss;
+    // ss << "Reconstructed Data: ";
+    // for (size_t i = 0; i < extracted_data.size(); ++i) {
+    //     ss << "0x" << std::setw(2) << std::setfill('0') << std::hex << (int)extracted_data[i] << " ";
+    // }
+    // ROS_INFO_STREAM(ss.str());
 
     // 7. 패킷 유효성 검사: 마지막 바이트가 0x03(ETX)인지 확인
     bool is_valid_packet = extracted_data.back() == ETX;
     if (!is_valid_packet) {
-        ROS_WARN_STREAM("\033[96mInvalid data! Last byte is not 0x03 (ETX).\033[0m");
+        //ROS_WARN_STREAM("\033[96mInvalid data! Last byte is not 0x03 (ETX).\033[0m");
         return;                                                 // If not valid, return and don't process data
     }
 
@@ -63,16 +63,15 @@ void process_packet(const unsigned char data_buffer[13], sensor_msgs::Imu& imu) 
     switch (sensor_type) {
         case 0X33:  // 가속도 센서 (ACC)
             {
-                acc_x = ((int)(unsigned char)extracted_data[5] | (int)(unsigned char)extracted_data[6] << 8);
-                acc_y = ((int)(unsigned char)extracted_data[7] | (int)(unsigned char)extracted_data[8] << 8);
-                acc_z = ((int)(unsigned char)extracted_data[9] | (int)(unsigned char)extracted_data[10] << 8);
+                acc_x = (int16_t)(((int)(unsigned char)extracted_data[5] | (int)(unsigned char)extracted_data[6] << 8)) / 1000.0;
+                acc_y = (int16_t)(((int)(unsigned char)extracted_data[7] | (int)(unsigned char)extracted_data[8] << 8)) / 1000.0;
+                acc_z = (int16_t)(((int)(unsigned char)extracted_data[8] | (int)(unsigned char)extracted_data[9] << 8)) / 1000.0;
                 
-                imu.linear_acceleration.x = acc_x / 1000.0 * 9.8;
-                imu.linear_acceleration.y = acc_y / 1000.0 * 9.8;
-                imu.linear_acceleration.z = acc_z / 1000.0 * 9.8;
+                imu.linear_acceleration.x = acc_x  * 9.80665;
+                imu.linear_acceleration.y = acc_y  * 9.80665;
+                imu.linear_acceleration.z = acc_z * 9.80665;
 
                 // ROS_INFO_STREAM("\033[1;32macc_x : " << acc_x << ", acc_y : " << acc_y << ", acc_z : " << acc_z << "\033[0m");
-
                 // std::cout << "[DEBUG] ACC: (" << imu.linear_acceleration.x << ", "
                 //      << imu.linear_acceleration.y << ", " << imu.linear_acceleration.z << ")" << std::endl;
             }
@@ -80,41 +79,45 @@ void process_packet(const unsigned char data_buffer[13], sensor_msgs::Imu& imu) 
 
         case 0X34:  // 각속도 센서 (GYR)
             {
-                gyr_x = ((int)(unsigned char)extracted_data[5] | (int)(unsigned char)extracted_data[6] << 8);
-                gyr_y = ((int)(unsigned char)extracted_data[7] | (int)(unsigned char)extracted_data[8] << 8);
-                gyr_z = ((int)(unsigned char)extracted_data[9] | (int)(unsigned char)extracted_data[10] << 8);
+                gyr_x = (int16_t)(((int)(unsigned char)extracted_data[5] | (int)(unsigned char)extracted_data[6] << 8)) / 10.0;
+                gyr_y = (int16_t)(((int)(unsigned char)extracted_data[7] | (int)(unsigned char)extracted_data[8] << 8)) / 10.0;
+                gyr_z = (int16_t)(((int)(unsigned char)extracted_data[9] | (int)(unsigned char)extracted_data[10] << 8)) / 10.0;
                 
-                imu.angular_velocity.x =  gyr_x / 10.0 * 0.01745;
-                imu.angular_velocity.y = gyr_y / 10.0 * 0.01745;
-                imu.angular_velocity.z = gyr_z / 10.0 * 0.01745;
+                imu.angular_velocity.x = gyr_x * (M_PI / 180.0);
+                imu.angular_velocity.y = gyr_y  * (M_PI / 180.0);
+                imu.angular_velocity.z = gyr_z  * (M_PI / 180.0);
 
-                // ROS_INFO_STREAM("\033[1;33mgyr_x : " << acc_x << ", gyr_y : " << acc_y << ", gyr_z : " << acc_z << "\033[0m");
-
+                 //ROS_INFO_STREAM("\033[1;33mgyr_x : " << gyr_x << ", gyr_y : " << gyr_y << ", gyr_z : " << gyr_z << "\033[0m");
                 // std::cout << "[DEBUG] GYO: (" << imu.angular_velocity.x << ", "
-                //      << imu.angular_velocity.y << ", " << imu.angular_velocity.z << ")" << std::endl;
+                // << imu.angular_velocity.y << ", " << imu.angular_velocity.z << ")" << std::endl;
             }
             break;            
 
         case 0X35:  // 오일러 각도 센서 (ANG)
-            {
-                ang_x = ((int)(unsigned char)extracted_data[5] | (int)(unsigned char)extracted_data[6] << 8);
-                ang_y = ((int)(unsigned char)extracted_data[7] | (int)(unsigned char)extracted_data[8] << 8);
-                ang_z = ((int)(unsigned char)extracted_data[9] | (int)(unsigned char)extracted_data[10] << 8);
+        {
+            ang_x = (int16_t)(((int)(unsigned char)extracted_data[5] | (int)(unsigned char)extracted_data[6] << 8)) / 100.0;
+            ang_y = (int16_t)(((int)(unsigned char)extracted_data[7] | (int)(unsigned char)extracted_data[8] << 8)) / 100.0;
+            ang_z = (int16_t)(((int)(unsigned char)extracted_data[9] | (int)(unsigned char)extracted_data[10] << 8)) / 100.0;
 
-                float x = ang_x / 100.0;
-                float y = ang_y / 100.0;
-                float z = ang_z / 100.0;                
-          
-        //    ROS_INFO_STREAM("\033[1;34mang_x  " << ang_x << "ang_y " << ang_y << "ang_z " << ang_z << "[d]\033[0m");
- 
-                imu.orientation.w = (COS(z) * COS(y) * COS(x)) + (SIN(z) * SIN(y) * SIN(x));
-                imu.orientation.x = (COS(z) * COS(y) * SIN(x)) - (SIN(z) * SIN(y) * COS(x));
-                imu.orientation.y = (COS(z) * SIN(y) * COS(x)) + (SIN(z) * COS(y) * SIN(x));
-                imu.orientation.z = (SIN(z) * COS(y) * COS(x)) - (COS(z) * SIN(y) * SIN(x));
+            //ROS_INFO_STREAM("\033[1;34mang_x : " << ang_x << ", ang_y : " << ang_y << ", ang_z : " << ang_z << "\033[0m");
 
-            //    std::cout << "[DEBUG] DEG: (" << imu.orientation.w << ", "
-            //          << imu.orientation.x << ", " << imu.orientation.y << ", " << imu.orientation.z << ")" << std::endl;               
-            }
+            // **Eular Angle [Degree] to [Radian]**
+            double roll = ang_x * M_PI / 180.0;
+            double pitch = ang_y * M_PI / 180.0;
+            double yaw = ang_z * M_PI / 180.0;
+
+            // **Euler Angle[Radian] to Qutanian **
+            tf::Quaternion q;
+            q.setRPY(roll, pitch, yaw);
+
+            imu.orientation.w = q.w();
+            imu.orientation.x = q.x();
+            imu.orientation.y = q.y();
+            imu.orientation.z = q.z();
+
+            //std::cout << "[DEBUG] GYO: (" << imu.orientation.w << ", "
+            //<< imu.orientation.x << ", " <<  imu.orientation.y << ", "<< imu.orientation.z  << ")" << std::endl;
+        }
             break;
 
         case 0X36:  // 자기 값 (MAG)
@@ -125,7 +128,8 @@ void process_packet(const unsigned char data_buffer[13], sensor_msgs::Imu& imu) 
             break;
 
         default:
-            ROS_WARN("Unknown sensor type received: %02X", sensor_type);
+            // Object index 디버깅
+            //ROS_WARN("Unknown sensor type received: %02X", sensor_type); 
             break;
     }
 }
@@ -139,7 +143,7 @@ void* serial_read_thread(void* arg) {
             my_serial.read(data_buffer, 13);
             new_data_available = true;
         }
-        usleep(2500); // 2.5ms대기, 20ms인경우 패킷값이 엄청 빨리들어옴
+        usleep(2500); // 2.5ms대기, 20(20000)ms인경우 패킷값이 엄청 빨리들어옴
     }
     pthread_exit(NULL);
 }
@@ -159,10 +163,12 @@ int main(int argc, char **argv) {
 	nh_private.param<int>("baud_rate", baud_rate, 115200);
 	nh_private.param<int>("rate_hz", rate_hz, 500);
 
+    ROS_INFO_STREAM("Serial Port is set to: " << serial_port);
     ROS_INFO_STREAM("Baud rate is set to: " << baud_rate);
+    ROS_INFO_STREAM("rate Hz is set to: " << rate_hz);
  
-    my_serial.setPort(serial_port); // 연결된 시리얼 포트 지정
-    my_serial.setBaudrate(115200);     // 시리얼 통신 속도 설정
+    my_serial.setPort(serial_port);
+    my_serial.setBaudrate(baud_rate);     
     serial::Timeout to = serial::Timeout::simpleTimeout(1000);  // 타임아웃 설정
     my_serial.setTimeout(to);
 
@@ -170,13 +176,13 @@ int main(int argc, char **argv) {
     imu.angular_velocity_covariance = {0.02, 0, 0, 0, 0.02, 0, 0, 0, 0.02};
     imu.linear_acceleration_covariance = {0.04, 0, 0, 0, 0.04, 0, 0, 0, 0.04};
 
-    imu.linear_acceleration.x = 0;
-    imu.linear_acceleration.y = 0;
-    imu.linear_acceleration.z = 0;
+    // imu.linear_acceleration.x = 0;
+    // imu.linear_acceleration.y = 0;
+    // imu.linear_acceleration.z = 0;
 
-    imu.angular_velocity.x = 0;
-    imu.angular_velocity.y = 0;
-    imu.angular_velocity.z = 0;
+    // imu.angular_velocity.x = 0;
+    // imu.angular_velocity.y = 0;
+    // imu.angular_velocity.z = 0;
 
     imu.orientation.w = 1;  // 기본 quaternion 설정
     imu.orientation.x = 0;
@@ -208,11 +214,13 @@ int main(int argc, char **argv) {
         return -1;
     }
 
-    ros::Rate loop_rate(500);  // 400Hz로 루프 실행
+    ros::Rate loop_rate(rate_hz);
+    ros::Time loop_start_time = ros::Time::now();
 
     while (ros::ok()) {
+            ros::Time iter_start = ros::Time::now(); // 루프 시작 시간
 
-             imu.header.frame_id = frame_id;
+            imu.header.frame_id = frame_id;
             imu.header.stamp = ros::Time::now();
 
             imu_pub.publish(imu);
@@ -237,6 +245,12 @@ int main(int argc, char **argv) {
 
         ros::spinOnce();
         loop_rate.sleep();
+
+        // 실제 루프 실행 시간 측정
+        //ros::Duration loop_exec_time = ros::Time::now() - iter_start;
+        //ROS_WARN_STREAM("\033[1;33m[Loop Execution Time]: " << loop_exec_time.toSec() * 1000 << " ms\033[0m");
+
+        
     }
 
     // 시리얼 읽기 스레드 종료
