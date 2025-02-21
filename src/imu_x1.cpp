@@ -1,6 +1,17 @@
 #include "imu_x1.hpp"
 #include <pthread.h> 
 
+// 자이로스코프 바이어스를 초기화하는 변수들
+double gyr_x_bias = 0.0;
+double gyr_y_bias = 0.0;
+double gyr_z_bias = 0.0;
+
+// 저주파 필터 변수들
+double low_pass_filter_alpha = 0.1;  // 필터의 알파 값 (0-1 사이)
+double filtered_gyr_x = 0.0;
+double filtered_gyr_y = 0.0;
+double filtered_gyr_z = 0.0;
+
 void* process_packet_thread(void* arg) {
     unsigned char* data_buffer = (unsigned char*) arg;  
     process_packet(data_buffer, imu);  
@@ -71,6 +82,10 @@ void process_packet(const unsigned char data_buffer[13], sensor_msgs::Imu& imu) 
                 imu.linear_acceleration.y = acc_y  * 9.80665;
                 imu.linear_acceleration.z = acc_z * 9.80665;
 
+                // imu.linear_acceleration.x += OFFSET_X;
+                // imu.linear_acceleration.y += OFFSET_Y;
+                // imu.linear_acceleration.z += OFFSET_Z;
+
                 // ROS_INFO_STREAM("\033[1;32macc_x : " << acc_x << ", acc_y : " << acc_y << ", acc_z : " << acc_z << "\033[0m");
                 // std::cout << "[DEBUG] ACC: (" << imu.linear_acceleration.x << ", "
                 //      << imu.linear_acceleration.y << ", " << imu.linear_acceleration.z << ")" << std::endl;
@@ -87,6 +102,7 @@ void process_packet(const unsigned char data_buffer[13], sensor_msgs::Imu& imu) 
                 imu.angular_velocity.y = gyr_y  * (M_PI / 180.0);
                 imu.angular_velocity.z = gyr_z  * (M_PI / 180.0);
 
+
                  //ROS_INFO_STREAM("\033[1;33mgyr_x : " << gyr_x << ", gyr_y : " << gyr_y << ", gyr_z : " << gyr_z << "\033[0m");
                 // std::cout << "[DEBUG] GYO: (" << imu.angular_velocity.x << ", "
                 // << imu.angular_velocity.y << ", " << imu.angular_velocity.z << ")" << std::endl;
@@ -99,8 +115,9 @@ void process_packet(const unsigned char data_buffer[13], sensor_msgs::Imu& imu) 
             ang_y = (int16_t)(((int)(unsigned char)extracted_data[7] | (int)(unsigned char)extracted_data[8] << 8)) / 100.0;
             ang_z = (int16_t)(((int)(unsigned char)extracted_data[9] | (int)(unsigned char)extracted_data[10] << 8)) / 100.0;
 
-            //ROS_INFO_STREAM("\033[1;34mang_x : " << ang_x << ", ang_y : " << ang_y << ", ang_z : " << ang_z << "\033[0m");
+            ROS_INFO_STREAM("\033[1;34mang_x : " << ang_x << ", ang_y : " << ang_y << ", ang_z : " << ang_z << "\033[0m");
 
+            
             // **Eular Angle [Degree] to [Radian]**
             double roll = ang_x * M_PI / 180.0;
             double pitch = ang_y * M_PI / 180.0;
