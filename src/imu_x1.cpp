@@ -65,7 +65,7 @@ void process_packet(const unsigned char data_buffer[13], sensor_msgs::Imu& imu) 
             {
                 acc_x = (int16_t)(((int)(unsigned char)extracted_data[5] | (int)(unsigned char)extracted_data[6] << 8)) / 1000.0;
                 acc_y = (int16_t)(((int)(unsigned char)extracted_data[7] | (int)(unsigned char)extracted_data[8] << 8)) / 1000.0;
-                acc_z = (int16_t)(((int)(unsigned char)extracted_data[8] | (int)(unsigned char)extracted_data[9] << 8)) / 1000.0;
+                acc_z = (int16_t)(((int)(unsigned char)extracted_data[9] | (int)(unsigned char)extracted_data[10] << 8)) / 1000.0;
                 
                 imu.linear_acceleration.x = acc_x  * 9.80665;
                 imu.linear_acceleration.y = acc_y  * 9.80665;
@@ -176,13 +176,13 @@ int main(int argc, char **argv) {
     imu.angular_velocity_covariance = {0.02, 0, 0, 0, 0.02, 0, 0, 0, 0.02};
     imu.linear_acceleration_covariance = {0.04, 0, 0, 0, 0.04, 0, 0, 0, 0.04};
 
-    // imu.linear_acceleration.x = 0;
-    // imu.linear_acceleration.y = 0;
-    // imu.linear_acceleration.z = 0;
+    imu.linear_acceleration.x = 0;
+    imu.linear_acceleration.y = 0;
+    imu.linear_acceleration.z = 0;
 
-    // imu.angular_velocity.x = 0;
-    // imu.angular_velocity.y = 0;
-    // imu.angular_velocity.z = 0;
+    imu.angular_velocity.x = 0;
+    imu.angular_velocity.y = 0;
+    imu.angular_velocity.z = 0;
 
     imu.orientation.w = 1;  // 기본 quaternion 설정
     imu.orientation.x = 0;
@@ -259,4 +259,3 @@ int main(int argc, char **argv) {
 
     return 0;
 }
-
