@@ -2,7 +2,7 @@
 
   <arg name="serial_port" default="/dev/ttyUSB0" /> <!-- /dev/ttyUSB0-->
   <arg name="baud_rate" default="115200" />
-  <arg name="rate_hz" default="500" />
+  <arg name="rate_hz" default="1000" />
   <arg name="frame_id" default="imu_link" />
 
     <node pkg="serial_x1" type="imu_x1_node" name="imu_x1_node" output="screen">

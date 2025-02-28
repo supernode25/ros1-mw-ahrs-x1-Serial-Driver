@@ -1,16 +1,15 @@
 #include "imu_x1.hpp"
 #include <pthread.h> 
 
-// 자이로스코프 바이어스를 초기화하는 변수들
-double gyr_x_bias = 0.0;
-double gyr_y_bias = 0.0;
-double gyr_z_bias = 0.0;
 
-// 저주파 필터 변수들
-double low_pass_filter_alpha = 0.1;  // 필터의 알파 값 (0-1 사이)
-double filtered_gyr_x = 0.0;
-double filtered_gyr_y = 0.0;
-double filtered_gyr_z = 0.0;
+
+void apply_low_pass_filter() {
+    // 저주파 필터를 각속도 값에 적용
+    filtered_gyr_x = low_pass_filter_alpha * gyr_x + (1 - low_pass_filter_alpha) * filtered_gyr_x;
+    filtered_gyr_y = low_pass_filter_alpha * gyr_y + (1 - low_pass_filter_alpha) * filtered_gyr_y;
+    filtered_gyr_z = low_pass_filter_alpha * gyr_z + (1 - low_pass_filter_alpha) * filtered_gyr_z;
+}
+
 
 void* process_packet_thread(void* arg) {
     unsigned char* data_buffer = (unsigned char*) arg;  
@@ -102,6 +101,13 @@ void process_packet(const unsigned char data_buffer[13], sensor_msgs::Imu& imu) 
                 imu.angular_velocity.y = gyr_y  * (M_PI / 180.0);
                 imu.angular_velocity.z = gyr_z  * (M_PI / 180.0);
 
+                // // 저주파 필터 적용
+                // apply_low_pass_filter();
+
+                // imu.angular_velocity.x = filtered_gyr_x * (M_PI / 180.0);
+                // imu.angular_velocity.y = filtered_gyr_y * (M_PI / 180.0);
+                // imu.angular_velocity.z = filtered_gyr_z * (M_PI / 180.0);
+
 
                  //ROS_INFO_STREAM("\033[1;33mgyr_x : " << gyr_x << ", gyr_y : " << gyr_y << ", gyr_z : " << gyr_z << "\033[0m");
                 // std::cout << "[DEBUG] GYO: (" << imu.angular_velocity.x << ", "
@@ -115,7 +121,7 @@ void process_packet(const unsigned char data_buffer[13], sensor_msgs::Imu& imu) 
             ang_y = (int16_t)(((int)(unsigned char)extracted_data[7] | (int)(unsigned char)extracted_data[8] << 8)) / 100.0;
             ang_z = (int16_t)(((int)(unsigned char)extracted_data[9] | (int)(unsigned char)extracted_data[10] << 8)) / 100.0;
 
-            ROS_INFO_STREAM("\033[1;34mang_x : " << ang_x << ", ang_y : " << ang_y << ", ang_z : " << ang_z << "\033[0m");
+            //ROS_INFO_STREAM("\033[1;34mang_x : " << ang_x << ", ang_y : " << ang_y << ", ang_z : " << ang_z << "\033[0m");
 
             
             // **Eular Angle [Degree] to [Radian]**
@@ -178,7 +184,7 @@ int main(int argc, char **argv) {
 	nh_private.param<std::string>("serial_port", serial_port, "/dev/USB0"); ///dev/ttyUSB0
 	nh_private.param<std::string>("frame_id", frame_id, "imu_link");
 	nh_private.param<int>("baud_rate", baud_rate, 115200);
-	nh_private.param<int>("rate_hz", rate_hz, 500);
+	nh_private.param<int>("rate_hz", rate_hz, 1000);
 
     ROS_INFO_STREAM("Serial Port is set to: " << serial_port);
     ROS_INFO_STREAM("Baud rate is set to: " << baud_rate);

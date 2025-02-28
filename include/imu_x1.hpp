@@ -35,10 +35,24 @@ static float acc_x = 0, acc_y = 0, acc_z = 0;
 static float gyr_x = 0, gyr_y = 0, gyr_z = 0;
 static float ang_x = 0, ang_y = 0, ang_z = 0;
 
+double low_pass_filter_alpha = 0.08;  // 필터의 알파 값 (0-1 사이)
+
+double filtered_gyr_x = 0.0;
+double filtered_gyr_y = 0.0;
+double filtered_gyr_z = 0.0;
+
+
+// 자이로스코프 바이어스를 초기화하는 변수들
+double gyr_x_bias = 0.0;
+double gyr_y_bias = 0.0;
+double gyr_z_bias = 0.0;
+
+
 std::string serial_port;
 std::string frame_id;
 int baud_rate;
 int rate_hz;
+double roll, pitch, yaw;
 bool run;
 
 high_resolution_clock::time_point last_recv_time;
@@ -47,6 +61,7 @@ high_resolution_clock::time_point last_pub_time;
 sensor_msgs::Imu imu;
 serial::Serial my_serial;
 pthread_t thread_id;
+tf::Quaternion q;
 void process_packet(const unsigned char data_buffer[13], sensor_msgs::Imu& imu);
 //std::vector<unsigned char> data_buffer(13);
 std::mutex data_mutex;
