@@ -2,14 +2,12 @@
 #include <pthread.h> 
 
 
-
 void apply_low_pass_filter() {
     // 저주파 필터를 각속도 값에 적용
     filtered_gyr_x = low_pass_filter_alpha * gyr_x + (1 - low_pass_filter_alpha) * filtered_gyr_x;
     filtered_gyr_y = low_pass_filter_alpha * gyr_y + (1 - low_pass_filter_alpha) * filtered_gyr_y;
     filtered_gyr_z = low_pass_filter_alpha * gyr_z + (1 - low_pass_filter_alpha) * filtered_gyr_z;
 }
-
 
 void* process_packet_thread(void* arg) {
     unsigned char* data_buffer = (unsigned char*) arg;  
@@ -166,7 +164,7 @@ void* serial_read_thread(void* arg) {
             my_serial.read(data_buffer, 13);
             new_data_available = true;
         }
-        usleep(2500); // 2.5ms대기, 20(20000)ms인경우 패킷값이 엄청 빨리들어옴
+        usleep(2000); // 1.5ms//1ms, 0.2ms, 2.5ms대기, 20(20000)ms인경우 패킷값이 엄청 빨리들어옴
     }
     pthread_exit(NULL);
 }
